@@ -15,9 +15,12 @@ import platform
 import subprocess
 import pymysql.cursors
 import pymysql
+import logging
 
 # Global variables
-DEBUG = 0
+LOGFORMAT = '%(asctime)s - %(levelname)s - %(message)s'
+LOGLEVEL = logging.ERROR
+logging.basicConfig(level=LOGLEVEL, format=LOGFORMAT)
 config = 'config.php'
 
 
@@ -28,8 +31,7 @@ def git_repo(path):
         git.Repo(path).git_dir
         return True
     except Exception as e:
-        if DEBUG:
-            print('DEBUG: %s' % repr(e))
+        logging.debug('%s' % repr(e))
         return False
 
 
@@ -40,7 +42,7 @@ def check_git_modules(path):
         git.Repo(path).submodules
         return True
     except Exception as e:
-        print('ERROR: %s' % repr(e))
+        logging.error('%s' % repr(e))
         return False
 
 
@@ -76,8 +78,7 @@ def getvalue(line):
 
     words = line.split("\'")
     val = words[3]
-    if DEBUG:
-        print('DEBUG: %s' % (val))
+    logging.debug('%s' % val)
     return val
 
 
@@ -94,11 +95,10 @@ def dbconnect(hostval, userval, paswval, nameval):
         cursor.execute(sql)
         result = cursor.fetchone()
         mydb.close()
-        if DEBUG:
-            print('DEBUG: %s' % (result))
+        logging.debug('%s' % result)
         return result
     except Exception as e:
-        print('ERROR: %s' % repr(e))
+        logging.error('%s' % repr(e))
         return None
 
 
@@ -111,8 +111,7 @@ print('Python version: %s' % (python))
 
 # Git check part
 path = os.getcwd()
-if DEBUG:
-    print('DEBUG: %s' % (path))
+logging.debug('Current folder: %s' % path)
 
 if git_repo(path) is True:
     repo = git.Repo(path)
@@ -126,7 +125,7 @@ if git_repo(path) is True:
     if check_git_modules(path) is True:
         print('Git modules installed fine.')
     else:
-        print('ERROR: Git modules error.')
+        logging.error('Git modules error.')
 
 else:
     print('Not git tracked folder')
@@ -152,7 +151,7 @@ if check_config is True:
     print('Config file %s exist' % (config))
 else:
     precheck = False
-    print('ERROR: No config file %s' % (config))
+    logging.error('No config file %s' % config)
 
 
 # Parse config for mysql schema version check
