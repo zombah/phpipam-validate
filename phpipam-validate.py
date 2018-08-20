@@ -57,11 +57,15 @@ def has_uncommited(path):
 def subproc(cmd):
     """ Run subprocess command """
 
-    proc = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, bufsize=1,
-                            universal_newlines=True)
-    script_response = proc.stdout.readline()
-    striped = script_response.rstrip()
-    return striped
+    try:
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, bufsize=1,
+                                universal_newlines=True)
+        script_response = proc.stdout.readline()
+        striped = script_response.rstrip()
+        proc.stdout.close()
+        return striped
+    except Exception as e:
+        logging.error('%s' % repr(e))
 
 
 def matchline(strfile, value):
@@ -138,8 +142,8 @@ print('Linux: %s, version: %s, optional: %s' % (linux[0], linux[1], linux[2]))
 print('System arch: %s' % (arch))
 
 # PHP and MySQL checks
-php_version = subproc("php --version")
-mysql_version = subproc("mysql --version")
+php_version = subproc(['php', '--version'])
+mysql_version = subproc(['mysql', '--version'])
 
 print('PHP: %s' % (php_version))
 print('MySQL: %s' % (mysql_version))
