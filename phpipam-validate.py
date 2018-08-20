@@ -71,10 +71,13 @@ def subproc(cmd):
 def matchline(strfile, value):
     """ Open file and search for specific line """
 
-    with open(strfile) as f:
-        for line in f:
-            if value in line:
-                return line
+    try:
+        with open(strfile) as f:
+            for line in f:
+                if value in line:
+                    return line
+    except Exception as e:
+        logging.error('%s' % repr(e))
 
 
 def getvalue(line):
