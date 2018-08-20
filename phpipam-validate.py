@@ -83,19 +83,25 @@ def matchline(strfile, value):
 def getvalue(line):
     """ Get value of key value pair """
 
-    words = line.split("\'")
-    val = words[3]
-    logging.debug('%s' % val)
-    return val
+    try:
+        line = line.rstrip()
+        parts = line.split(" = ")
+        part = parts[1]
+        val = part.replace("\'", "")
+        logging.debug('%s' % val)
+        return val
+    except Exception as e:
+        logging.error('%s' % repr(e))
 
 
-def dbconnect(hostval, userval, paswval, nameval):
+def dbconnect(hostval, userval, paswval, nameval, portval):
     """ Connect and select from MySQL db """
 
     try:
         dictcursor = pymysql.cursors.DictCursor
         mydb = pymysql.connect(db=nameval, host=hostval, user=userval,
-                               passwd=paswval, cursorclass=dictcursor)
+                               passwd=paswval, port=portval,
+                               cursorclass=dictcursor)
         cursor = mydb.cursor()
         sql = ("SELECT `%s`, `%s` FROM `%s`" % ('version', 'dbversion',
                                                 'settings'))
@@ -166,6 +172,7 @@ dbhost = '''$db['host']'''
 dbuser = '''$db['user']'''
 dbpass = '''$db['pass']'''
 dbname = '''$db['name']'''
+dbport = '''$db['port']'''
 
 
 if precheck is True:
@@ -173,12 +180,15 @@ if precheck is True:
     user = matchline(config, dbuser)
     pasw = matchline(config, dbpass)
     name = matchline(config, dbname)
+    port = matchline(config, dbport)
     hostvalue = getvalue(host)
     uservalue = getvalue(user)
     paswvalue = getvalue(pasw)
     namevalue = getvalue(name)
+    portvalue = getvalue(port)
 
-    dbversion = dbconnect(hostvalue, uservalue, paswvalue, namevalue)
+    dbversion = dbconnect(hostvalue, uservalue, paswvalue, namevalue,
+                          portvalue)
     if dbversion is not None:
         print('DB Version: %s, Schema version: %s' % (dbversion["version"],
                                                       dbversion["dbversion"]))
