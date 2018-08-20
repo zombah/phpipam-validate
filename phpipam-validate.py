@@ -189,7 +189,7 @@ if precheck is True:
     portvalue = getvalue(port)
 
     dbversion = dbconnect(hostvalue, uservalue, paswvalue, namevalue,
-                          portvalue)
+                          int(portvalue))
     if dbversion is not None:
         print('DB Version: %s, Schema version: %s' % (dbversion["version"],
                                                       dbversion["dbversion"]))
