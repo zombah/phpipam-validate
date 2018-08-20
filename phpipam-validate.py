@@ -88,6 +88,7 @@ def getvalue(line):
         parts = line.split(" = ")
         part = parts[1]
         val = part.replace("\'", "")
+        val = val.replace(";", "")
         logging.debug('%s' % val)
         return val
     except Exception as e:
