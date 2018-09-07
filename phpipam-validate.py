@@ -14,6 +14,7 @@ import os
 import platform
 import pymysql.cursors
 import pymysql
+import re
 import subprocess
 import sys
 
@@ -22,6 +23,9 @@ LOGFORMAT = '%(asctime)s - %(levelname)s - %(message)s'
 LOGLEVEL = logging.ERROR
 logging.basicConfig(level=LOGLEVEL, format=LOGFORMAT)
 config = 'config.php'
+regex = re.compile(r'\$(?P<name>\w+)(?:\[\'(?P<var>\w+)\'\])?\s*=\s*"?\'?'
+                   r'(?P<val>[^"\';]+)"?\'?;', re.IGNORECASE | re.DOTALL)
+phpdict = dict()
 
 
 def git_repo(path):
@@ -68,31 +72,27 @@ def subproc(cmd):
         logging.error('%s' % repr(e))
 
 
-def matchline(strfile, value):
-    """ Open file and search for specific line """
-
+def parse_config(strfile):
     try:
         with open(strfile) as f:
             for line in f:
-                if value in line:
-                    return line
+                result = regex.findall(line)
+                if result:
+                    logging.debug('%s' % result)
+                    for name, var, val in result:
+                        if var:
+                            if name not in phpdict:
+                                phpdict[name] = dict()
+
+                                phpdict[name][var] = val
+                            else:
+                                phpdict[name][var] = val
+                        else:
+                            phpdict[name] = val
     except Exception as e:
         logging.error('%s' % repr(e))
-
-
-def getvalue(line):
-    """ Get value of key value pair """
-
-    try:
-        line = line.rstrip()
-        parts = line.split(" = ")
-        part = parts[1]
-        val = part.replace("\'", "")
-        val = val.replace(";", "")
-        logging.debug('%s' % val)
-        return val
-    except Exception as e:
-        logging.error('%s' % repr(e))
+    finally:
+        f.close()
 
 
 def dbconnect(hostval, userval, paswval, nameval, portval):
@@ -168,28 +168,17 @@ else:
     logging.error('No config file %s' % config)
 
 
-# Parse config for mysql schema version check
-dbhost = '''$db['host']'''
-dbuser = '''$db['user']'''
-dbpass = '''$db['pass']'''
-dbname = '''$db['name']'''
-dbport = '''$db['port']'''
-
-
 if precheck is True:
-    host = matchline(config, dbhost)
-    user = matchline(config, dbuser)
-    pasw = matchline(config, dbpass)
-    name = matchline(config, dbname)
-    port = matchline(config, dbport)
-    hostvalue = getvalue(host)
-    uservalue = getvalue(user)
-    paswvalue = getvalue(pasw)
-    namevalue = getvalue(name)
-    portvalue = getvalue(port)
+    parse_config(config)
 
-    dbversion = dbconnect(hostvalue, uservalue, paswvalue, namevalue,
-                          int(portvalue))
+    dbhost = phpdict['db']['host']
+    dbuser = phpdict['db']['user']
+    dbpass = phpdict['db']['pass']
+    dbname = phpdict['db']['name']
+    dbport = phpdict['db']['port']
+
+    dbversion = dbconnect(dbhost, dbuser, dbpass, dbname,
+                          int(dbport))
     if dbversion is not None:
         print('DB Version: %s, Schema version: %s' % (dbversion["version"],
                                                       dbversion["dbversion"]))
