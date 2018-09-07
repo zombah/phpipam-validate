@@ -8,14 +8,14 @@ __copyright__ = "Copyright 2018"
 __license__ = "GPL v3"
 __version__ = "0.1"
 
-import sys
-import os
 import git
+import logging
+import os
 import platform
-import subprocess
 import pymysql.cursors
 import pymysql
-import logging
+import subprocess
+import sys
 
 # Global variables
 LOGFORMAT = '%(asctime)s - %(levelname)s - %(message)s'
